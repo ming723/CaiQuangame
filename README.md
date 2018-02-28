@@ -1,1 +1,2 @@
-# CaiQuangame
+# 剪刀石头布
+#### 主要代码都在quan.html里

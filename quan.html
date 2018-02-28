@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>石头剪刀布</title>
+    <script src="lufylegend-1.7.6.min.js"></script>
+</head>
+<body>
+    <div id="myDiv">
+        
+    </div>
+    <script>
+        init(200,"myDiv",600,300,main);
+        var imgData=new Array(
+            {name:"shitou",path:"st.png"},
+            {name:"jiandao",path:"jd.png"},
+            {name:"bu",path:"b.png"}
+        );
+        var imgList={};
+        var showList=new Array();
+        var bgLayer,leftlayer,rightlayer;//分为三层，左边的输赢显示，底部的出拳显示，和中间的玩家和电脑显示
+        function main() {
+            //绘制背景层
+            bgLayer=new LSprite();
+            addChild(bgLayer);
+            //绘制加载动画
+            var lodingLayer=new LoadingSample3();
+            bgLayer.addChild(lodingLayer);
+            LLoadManage.load(imgData,function (progress) {
+                lodingLayer.setProgress(progress);
+            },function (result) {
+                imgList=result;
+                bgLayer.removeChild(lodingLayer);
+                lodingLayer=null;
+                create();
+            });
+        }
+        var textSuccess,textFail,textPing;
+         var selfLBit,computerLBit;
+        function create() {
+            /*四个参数，第一个是边框大小，第二个是边框颜色，第三个是数组，从xy分别为0，开始绘制一个长为600，宽为300的矩形，第四个是是否实心，
+                第五个是实心颜色
+           */
+            bgLayer.graphics.drawRect(1,"#000",[0,0,600,300],true,"#000");
+                //绘制左边的层
+            leftlayer=new LSprite();
+            leftlayer.graphics.drawRect(1,"#fff",[0,0,100,120],true,"#fff");
+            leftlayer.x=20;
+            leftlayer.y=35;
+            bgLayer.addChild(leftlayer);
+             //绘制底部的层
+            rightlayer=new LSprite();
+            rightlayer.graphics.drawRect(1,"#fff",[0,0,300,100],true,"#fff");
+            rightlayer.x=bgLayer.getWidth()/2-rightlayer.getWidth()/3;
+            rightlayer.y=bgLayer.getHeight()-rightlayer.getHeight()-20;
+            bgLayer.addChild(rightlayer);
+
+            //绘制左边的赢输平
+            changeSuccessFail(0,0,0);
+
+            //绘制底部的石头剪刀布
+            showList.push(new LBitmapData(imgList["shitou"],0,0,100,100));
+            showList.push(new LBitmapData(imgList["jiandao"],0,0,100,100));
+            showList.push(new LBitmapData(imgList["bu"],0,0,100,100));
+
+            var shiLayer=new LSprite();
+            shiLayer.addChild(new LBitmap(showList[0]));
+            shiLayer.scaleX=0.8;
+            shiLayer.scaleY=0.8;
+            shiLayer.x=10;
+            shiLayer.y=15;
+
+            var jianLayer=new LSprite();
+            jianLayer.addChild(new LBitmap(showList[1]));
+            jianLayer.scaleX=0.8;
+            jianLayer.scaleY=0.8;
+            jianLayer.x=110;
+            jianLayer.y=15;
+
+            var buLayer=new LSprite();
+            buLayer.addChild(new LBitmap(showList[2]));
+            buLayer.scaleX=0.8;
+            buLayer.scaleY=0.8;
+            buLayer.x=210;
+            buLayer.y=15;
+
+            rightlayer.addChild(shiLayer);
+            rightlayer.addChild(jianLayer);
+            rightlayer.addChild(buLayer);
+
+            //绘制中间的出拳：
+            selfLBit=new LBitmap(new LBitmapData(imgList["shitou"],0,0,100,100));
+            selfLBit.scaleY=0.8;
+            selfLBit.scaleX=0.8;
+            selfLBit.x=bgLayer.getWidth()/2-rightlayer.getWidth()/3;
+            selfLBit.y=80;
+            computerLBit=new LBitmap(new LBitmapData(imgList["shitou"],0,0,100,100));
+            computerLBit.scaleY=0.8;
+            computerLBit.scaleX=0.8;
+            computerLBit.x=bgLayer.getWidth()-computerLBit.getWidth()*2-20;
+            computerLBit.y=80;
+
+            //绘制玩家和电脑
+            var selfText=new LTextField();
+            selfText.text="玩家";
+            selfText.color="#fff";
+             selfText.x=bgLayer.getWidth()/2-70;
+            selfText.y=50;
+            var computerText=new LTextField();
+            computerText.text="电脑";
+            computerText.color="#fff";
+            computerText.x=bgLayer.getWidth()-computerLBit.getWidth()*2+10;
+            computerText.y=50;
+
+            bgLayer.addChild(selfText);
+            bgLayer.addChild(computerText);
+            bgLayer.addChild(selfLBit);
+            bgLayer.addChild(computerLBit);
+
+            shiLayer.addEventListener(LMouseEvent.MOUSE_UP,shiClick,true);
+            jianLayer.addEventListener(LMouseEvent.MOUSE_UP,jianClick,true);
+            buLayer.addEventListener(LMouseEvent.MOUSE_UP,buClick,true);
+
+        }
+        function shiClick() {
+            selfChange(0);
+        }
+        function jianClick() {
+            selfChange(1);
+        }
+        function buClick() {
+            selfChange(2);
+        }
+
+        var successNum=0,failNum=0,pingNum=0;
+        function selfChange(type) {
+            bgLayer.removeChild(selfLBit);
+            selfLBit=new LBitmap(showList[type]);
+            selfLBit.scaleY=0.8;
+            selfLBit.scaleX=0.8;
+            selfLBit.x=bgLayer.getWidth()/2-rightlayer.getWidth()/3;
+            selfLBit.y=80;
+            bgLayer.addChild(selfLBit);
+
+            bgLayer.removeChild(computerLBit);
+            var randomNum=Math.floor(Math.random()*3);
+            computerLBit=new LBitmap(showList[randomNum]);
+            computerLBit.scaleY=0.8;
+            computerLBit.scaleX=0.8;
+            computerLBit.x=bgLayer.getWidth()-computerLBit.getWidth()*2-20;
+            computerLBit.y=80;
+            bgLayer.addChild(computerLBit);
+
+            switch (type){
+                case 0://石头
+                        if(randomNum==0){//平局
+                            pingNum++;
+                        }else if(randomNum==1){//赢
+                            successNum++;
+                        }else if(randomNum==2){//输
+                            failNum++;
+                        }
+                    break;
+                case 1://剪刀
+                        if(randomNum==0){//输
+                             failNum++;
+                        }else if(randomNum==1){//平局
+                            pingNum++;
+                        }else if(randomNum==2){//赢
+                              successNum++;
+                        }
+                    break;
+                case 2://布
+                         if(randomNum==0){//赢
+                                  successNum++;
+                        }else if(randomNum==1){//输
+                                     failNum++;
+                        }else if(randomNum==2){//平局
+                                    pingNum++;
+                        }
+
+                    break;
+            }
+            leftlayer.removeChild(textSuccess);
+            leftlayer.removeChild(textFail);
+            leftlayer.removeChild(textPing);
+            changeSuccessFail(successNum,failNum,pingNum);
+
+        }
+
+        function changeSuccessFail(a,b,c) {
+            textSuccess=new LTextField();
+            textSuccess.color="#000";
+            textSuccess.size=12;
+            textSuccess.text="赢："+a;
+            textSuccess.x=leftlayer.getWidth()/4;
+            textSuccess.y=20;
+
+            textFail=new LTextField();
+            textFail.color="#000";
+            textFail.size=12;
+            textFail.text="输："+b;
+            textFail.x=leftlayer.getWidth()/4;
+            textFail.y=50;
+
+            textPing=new LTextField();
+            textPing.color="#000";
+            textPing.size=12;
+            textPing.text="平："+c;
+            textPing.x=leftlayer.getWidth()/4;
+            textPing.y=80;
+             leftlayer.addChild(textSuccess);
+            leftlayer.addChild(textFail);
+            leftlayer.addChild(textPing);
+        }
+
+    </script>
+</body>
+</html>
